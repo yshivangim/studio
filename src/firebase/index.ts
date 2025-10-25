@@ -5,7 +5,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
-import { firebaseConfig } from './config';
+import { getFirebaseConfig } from './config';
 
 // This file is the single point of entry for all Firebase services.
 // It ensures that Firebase is initialized only once (singleton pattern).
@@ -19,7 +19,8 @@ let provider: GoogleAuthProvider;
 function initializeFirebase() {
   if (typeof window !== 'undefined') {
     if (!getApps().length) {
-      app = initializeApp(firebaseConfig);
+      // getFirebaseConfig is only called on the client
+      app = initializeApp(getFirebaseConfig());
     } else {
       app = getApp();
     }
@@ -31,7 +32,7 @@ function initializeFirebase() {
   }
 }
 
-// We don't call initializeFirebase() here anymore.
+// We don't call initializeFirebase() here.
 // It will be called by the getter functions to ensure it only runs on the client.
 
 // Export getter functions to ensure single instances
