@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { LogOut, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
@@ -86,7 +86,7 @@ export default function ProfilePage() {
         });
 
         return () => unsubscribe();
-    } else if (!user && isFetching) {
+    } else if (!user && !isFetching) {
         setIsFetching(false);
     }
   }, [user, db, reset, isFetching]);
@@ -129,6 +129,7 @@ export default function ProfilePage() {
     if (!user || !db || !isDirty) return;
 
     setIsBuddyLoading(true);
+    toast({ title: 'Saving...', description: "Your buddy's profile is being updated." });
 
     const pfpFile = values.buddyPfp?.[0];
     let newPfpUrl: string | null = buddyPfpPreview;
@@ -321,5 +322,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
