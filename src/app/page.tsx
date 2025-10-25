@@ -109,10 +109,20 @@ export default function Home() {
       </main>
 
       <footer className="bg-card border-t">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Yo Companion. All rights reserved.</p>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-muted-foreground text-sm">
+          <div className="flex justify-center gap-x-4">
+            <Link href="/privacy" className="hover:text-primary hover:underline">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-primary hover:underline">
+              Terms & Conditions
+            </Link>
+          </div>
+          <p className="mt-4">&copy; {new Date().getFullYear()} Yo Companion. All rights reserved.</p>
         </div>
       </footer>
     </div>
   );
 }
+
+    

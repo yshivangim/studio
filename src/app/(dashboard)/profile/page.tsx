@@ -12,9 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { LogOut, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -52,51 +52,45 @@ export default function ProfilePage() {
       buddyPfp: null,
     },
   });
-
-  const { reset: resetBuddyForm, formState: { isDirty } } = buddyForm;
-
-  const fetchBuddyProfile = useCallback(async () => {
-    if (!user || !db) return;
-    
-    const buddyRef = doc(db, 'buddies', user.uid);
-    try {
-      const docSnap = await getDoc(buddyRef);
-      if (docSnap.exists()) {
-        const buddyData = docSnap.data();
-        const defaultValues = { 
-          buddyName: buddyData.name || 'Buddy',
-          enableVoice: buddyData.enableVoice !== false,
-          language: buddyData.language || 'English',
-          buddyPfp: null,
-        };
-        resetBuddyForm(defaultValues);
-        if (buddyData.pfpUrl) {
-          setBuddyPfpPreview(buddyData.pfpUrl);
-        }
-      }
-    } catch(error) {
-        console.error("Failed to fetch buddy profile:", error);
-        toast({
-            variant: 'destructive',
-            title: 'Load Failed',
-            description: 'Could not load your buddy profile.'
-        });
-    } finally {
-        setIsFetching(false);
-    }
-  }, [user, db, resetBuddyForm, toast]);
-
+  
+  const { reset, formState: { isDirty } } = buddyForm;
 
   useEffect(() => {
-    // Only fetch if user and db are available
     if (user && db) {
-      setIsFetching(true);
-      fetchBuddyProfile();
-    } else if (!user && !isFetching) {
-      // If there's no user and we are not already loading, set fetching to false.
-      setIsFetching(false);
+        const buddyRef = doc(db, 'buddies', user.uid);
+        const unsubscribe = onSnapshot(buddyRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const defaultValues = { 
+                    buddyName: data.name || 'Buddy',
+                    enableVoice: data.enableVoice !== false,
+                    language: data.language || 'English',
+                    buddyPfp: null,
+                };
+                reset(defaultValues);
+                if (data.pfpUrl) {
+                    setBuddyPfpPreview(data.pfpUrl);
+                }
+            } else {
+                 reset({ 
+                    buddyName: 'Buddy',
+                    enableVoice: true,
+                    language: 'English',
+                    buddyPfp: null,
+                });
+            }
+            setIsFetching(false);
+        }, (error) => {
+            console.error("Failed to fetch buddy profile:", error);
+            setIsFetching(false); // Ensure loading stops even on error
+        });
+
+        return () => unsubscribe();
+    } else if (!user && isFetching) {
+        setIsFetching(false);
     }
-  }, [user, db, fetchBuddyProfile, isFetching]);
+  }, [user, db, reset, isFetching]);
+
 
   const handlePfpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -135,55 +129,42 @@ export default function ProfilePage() {
     if (!user || !db || !isDirty) return;
 
     setIsBuddyLoading(true);
-    toast({ title: 'Saving...', description: "Your buddy's profile is being updated." });
 
     const pfpFile = values.buddyPfp?.[0];
-    let newPfpUrl = buddyPfpPreview;
+    let newPfpUrl: string | null = buddyPfpPreview;
 
-    const dataToSave: {
-      name: string;
-      enableVoice: boolean;
-      language: string;
-      pfpUrl?: string | null;
-    } = {
-      name: values.buddyName,
-      enableVoice: values.enableVoice,
-      language: values.language,
-      pfpUrl: newPfpUrl,
-    };
-
-    const processSave = async () => {
-      try {
-        if (pfpFile) {
-          const storage = getStorageInstance();
-          const pfpRef = ref(storage, `buddy-pfps/${user.uid}/${pfpFile.name}`);
-          const snapshot = await uploadBytes(pfpRef, pfpFile);
-          newPfpUrl = await getDownloadURL(snapshot.ref);
-          dataToSave.pfpUrl = newPfpUrl;
-        }
-
-        const buddyRef = doc(db, 'buddies', user.uid);
-        await setDoc(buddyRef, dataToSave, { merge: true });
-
-        toast({ title: 'Buddy Updated', description: "Your buddy's profile has been saved." });
-        
-        buddyForm.reset({ ...values, buddyPfp: null });
-        if (newPfpUrl) setBuddyPfpPreview(newPfpUrl);
-
-      } catch (error: any) {
-        console.error('Buddy Update Error', error);
-        toast({
-          variant: 'destructive',
-          title: 'Update Failed',
-          description: error.message || 'Could not update buddy profile.',
-        });
-      } finally {
-        setIsBuddyLoading(false);
+    try {
+      if (pfpFile) {
+        const storage = getStorageInstance();
+        const pfpRef = ref(storage, `buddy-pfps/${user.uid}/${pfpFile.name}`);
+        const snapshot = await uploadBytes(pfpRef, pfpFile);
+        newPfpUrl = await getDownloadURL(snapshot.ref);
       }
-    };
-    
-    // Run the save operation in the background
-    processSave();
+      
+      const dataToSave = {
+        name: values.buddyName,
+        enableVoice: values.enableVoice,
+        language: values.language,
+        pfpUrl: newPfpUrl,
+      };
+
+      const buddyRef = doc(db, 'buddies', user.uid);
+      await setDoc(buddyRef, dataToSave, { merge: true });
+
+      toast({ title: 'Buddy Updated', description: "Your buddy's profile has been saved." });
+      buddyForm.reset({ ...values, buddyPfp: null });
+      if(newPfpUrl) setBuddyPfpPreview(newPfpUrl);
+
+    } catch (error: any) {
+      console.error('Buddy Update Error', error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: error.message || 'Could not update buddy profile.',
+      });
+    } finally {
+      setIsBuddyLoading(false);
+    }
   }
 
   if (isFetching) {
@@ -340,3 +321,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
