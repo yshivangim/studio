@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "feature-homework",
+      "description": "A student studying at a desk with books and a laptop.",
+      "imageUrl": "https://images.unsplash.com/photo-1593698054469-2bb6fdf4b512?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzdHVkZW50JTIwc3R1ZHlpbmd8ZW58MHx8fHwxNzYxMjcyMjYwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "student studying"
+    },
+    {
+      "id": "feature-recommender",
+      "description": "A collage of fashion items and music album covers.",
+      "imageUrl": "https://images.unsplash.com/photo-1637081913098-dd5acc833334?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZmFzaGlvbiUyMG11c2ljfGVufDB8fHx8MTc2MTM3OTY1Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fashion music"
+    },
+    {
+      "id": "feature-tts",
+      "description": "Abstract visualization of sound waves.",
+      "imageUrl": "https://images.unsplash.com/photo-1652909865322-1515df3a2efd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzb3VuZCUyMHdhdmVzfGVufDB8fHx8MTc2MTMzMjc5OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sound waves"
+    },
+    {
+      "id": "dashboard-welcome",
+      "description": "An abstract, friendly robot waving hello.",
+      "imageUrl": "https://images.unsplash.com/photo-1759663174000-49ad3b40b457?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmcmllbmRseSUyMHJvYm90fGVufDB8fHx8MTc2MTMxMDk1NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "friendly robot"
+    }
+  ]
 }
