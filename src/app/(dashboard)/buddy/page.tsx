@@ -36,7 +36,6 @@ interface BuddyProfile {
   name: string;
   pfpUrl: string;
   enableVoice: boolean;
-  voice: string;
   language: string;
 }
 
@@ -47,7 +46,7 @@ export default function BuddyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [buddyProfile, setBuddyProfile] = useState<BuddyProfile>({ name: 'Buddy', pfpUrl: '', enableVoice: true, voice: 'Algenib', language: 'English' });
+  const [buddyProfile, setBuddyProfile] = useState<BuddyProfile>({ name: 'Buddy', pfpUrl: '', enableVoice: true, language: 'English' });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,22 +70,16 @@ export default function BuddyPage() {
             name: data.name || 'Buddy',
             pfpUrl: data.pfpUrl || '',
             enableVoice: data.enableVoice !== false,
-            voice: data.voice || 'Algenib',
             language: data.language || 'English',
           });
         }
       }, (error) => {
         console.error("Error fetching buddy profile:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Could not load profile',
-          description: 'Failed to retrieve your buddy\'s profile.'
-        });
       });
       
       return () => unsubscribe();
     }
-  }, [appUser, db, toast]);
+  }, [appUser, db]);
   
   // Fetch Chat History
   useEffect(() => {
@@ -183,14 +176,13 @@ export default function BuddyPage() {
 
     try {
       // 3. Call the AI with full history
-      const fullHistory = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+      const historyForAI = messages.map(m => ({ role: m.role, content: m.content }));
       const response = await talkToBuddy({ 
         message: values.message,
         photoDataUri,
         buddyName: buddyProfile.name,
-        conversationHistory: fullHistory,
+        conversationHistory: JSON.stringify(historyForAI),
         enableVoice: buddyProfile.enableVoice,
-        voice: buddyProfile.voice,
         language: buddyProfile.language,
       });
 
@@ -352,3 +344,5 @@ export default function BuddyPage() {
     </div>
   );
 }
+
+    

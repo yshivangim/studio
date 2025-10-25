@@ -27,7 +27,6 @@ const TalkToBuddyInputSchema = z.object({
     .optional()
     .describe('A JSON string of the past conversation history.'),
   enableVoice: z.boolean().optional().describe('Whether to generate an audio response.'),
-  voice: z.string().optional().describe('The voice to use for the audio response.'),
   language: z.string().optional().describe('The preferred language for the conversation.'),
 });
 export type TalkToBuddyInput = z.infer<typeof TalkToBuddyInputSchema>;
@@ -157,3 +156,5 @@ const talkToBuddyFlow = ai.defineFlow(
     };
   }
 );
+
+    
