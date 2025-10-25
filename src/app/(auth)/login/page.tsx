@@ -65,6 +65,7 @@ export default function LoginPage() {
 
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
+    console.log('Attempting to sign in from hostname:', window.location.hostname);
     try {
       const result = await signInWithPopup(auth, provider);
       console.log("Google user:", result.user);

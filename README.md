@@ -17,17 +17,24 @@ For authentication (especially Google Sign-In) to work during development, you *
 *   Find **Google** in the list of providers.
 *   Click the pencil icon to edit, **Enable** the provider, and click **Save**.
 
-### **2. Authorize Your Development Environment (The Fix for Current Errors)**
+### **2. Authorize Your Development Environment**
 
-To make Google Sign-In work while you are developing on your local machine (`localhost`), you must add `localhost` to the list of authorized domains. This is a required security step.
+To make Google Sign-In work while you are developing, you must add your development domains to the list of authorized domains in the Firebase Console. This is a required security step.
 
 *   In the **Authentication** > **Sign-in method** tab, scroll down to the **Authorized domains** section.
 *   Click **Add domain** and enter `localhost`.
 *   Click **Add domain** again and enter `127.0.0.1`.
 
-This step is **only for development**. It will **not** prevent your app from working when it is live on the internet.
+### **3. Troubleshooting `auth/unauthorized-domain`**
 
-### **3. Your Live Domain (100% Online)**
+If you have added `localhost` and `127.0.0.1` and still see an `auth/unauthorized-domain` error, it means your development environment is using a different hostname. To find it:
+1.  Open your browser's developer tools (Right-click -> Inspect -> Console).
+2.  Try to sign in with Google in your app.
+3.  Look for a message in the console that says `Attempting to sign in from hostname: [some-hostname]`.
+4.  Copy that exact `[some-hostname]` value.
+5.  Go back to the Firebase Console and add that new hostname to your **Authorized domains** list.
+
+### **4. Your Live Domain (100% Online)**
 
 When you deploy your app to Firebase Hosting, it will get a public URL (for example, `your-project-id.web.app`).
 
