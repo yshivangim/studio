@@ -16,29 +16,20 @@ interface FirebaseContextValue {
   app: FirebaseApp | null;
   auth: Auth | null;
   db: Firestore | null;
-  user: User | null;
-  loading: boolean;
+  user: User | null | undefined; // undefined means loading, null means no user
 }
 
 const FirebaseContext = createContext<FirebaseContextValue>({
   app: null,
   auth: null,
   db: null,
-  user: null,
-  loading: true,
+  user: undefined, // Start in a loading state
 });
 
 export const useFirebaseApp = () => useContext(FirebaseContext)?.app;
 export const useAuth = () => useContext(FirebaseContext)?.auth;
 export const useFirestore = () => useContext(FirebaseContext)?.db;
-export const useUser = () => {
-  const context = useContext(FirebaseContext);
-  return context?.user;
-};
-export const useFirebaseLoading = () => {
-    const context = useContext(FirebaseContext);
-    return context?.loading;
-}
+export const useUser = () => useContext(FirebaseContext)?.user;
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -53,19 +44,17 @@ export function FirebaseProvider({
   auth,
   db,
 }: FirebaseProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null | undefined>(undefined);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [auth]);
 
-  const value = { app, auth, db, user, loading };
+  const value = { app, auth, db, user };
 
   return (
     <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>

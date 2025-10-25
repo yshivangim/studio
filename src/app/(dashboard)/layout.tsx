@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useUser, useAuth, useFirebaseLoading } from '@/firebase/provider';
+import { useUser } from '@/firebase/provider';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useEffect } from 'react';
 import {
@@ -46,25 +46,23 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = useUser();
-  const loading = useFirebaseLoading();
   const router = useRouter();
   const pathname = usePathname();
+  const isLoading = user === undefined;
 
   useEffect(() => {
-    // if the provider is done loading and there's no user, redirect to login
-    if (!loading && !user) {
+    // if the user is explicitly null (auth finished loading and no user), redirect
+    if (user === null) {
       router.replace('/login');
     }
-  }, [user, loading, router]);
+  }, [user, router]);
 
-  // While firebase is loading, we can show a loader or nothing
-  // showing nothing makes the app feel faster
-  if (loading) {
+  if (isLoading) {
     return <FullPageLoader />;
   }
 
   // If there is no user, we will be redirected, so we can return null
-  // to avoid flashing the layout.
+  // to avoid flashing the layout while the redirect happens.
   if (!user) {
     return null;
   }
