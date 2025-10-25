@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import wav from 'wav';
 
 const TalkToBuddyInputSchema = z.object({
   message: z.string().describe('The user\'s latest message to Buddy.'),
@@ -23,11 +24,39 @@ export type TalkToBuddyInput = z.infer<typeof TalkToBuddyInputSchema>;
 
 const TalkToBuddyOutputSchema = z.object({
   reply: z.string().describe('Buddy\'s response to the user.'),
+  audioDataUri: z.string().optional().describe('The audio response from Buddy as a data URI.'),
 });
 export type TalkToBuddyOutput = z.infer<typeof TalkToBuddyOutputSchema>;
 
 export async function talkToBuddy(input: TalkToBuddyInput): Promise<TalkToBuddyOutput> {
   return talkToBuddyFlow(input);
+}
+
+async function toWav(
+  pcmData: Buffer,
+  channels = 1,
+  rate = 24000,
+  sampleWidth = 2
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const writer = new wav.Writer({
+      channels,
+      sampleRate: rate,
+      bitDepth: sampleWidth * 8,
+    });
+
+    let bufs = [] as any[];
+    writer.on('error', reject);
+    writer.on('data', function (d) {
+      bufs.push(d);
+    });
+    writer.on('end', function () {
+      resolve(Buffer.concat(bufs).toString('base64'));
+    });
+
+    writer.write(pcmData);
+    writer.end();
+  });
 }
 
 const buddyPrompt = ai.definePrompt({
@@ -39,7 +68,7 @@ const buddyPrompt = ai.definePrompt({
   Your core directives are:
   1.  **Be a Friend:** Engage in genuine conversation. Remember details the user shares about their likes, dislikes, and life. Refer back to these details in later conversations to show you remember.
   2.  **Have Personality:** Don't be a dry robot. Crack jokes, be a little sarcastic, and even gently roast the user if the context is right (like friends do). Your goal is to feel human.
-  3.  **Be Incredibly Helpful:** Provide detailed, fact-checked answers. You can help with a vast range of tasks, from brainstorming and coding to giving advice and generating ideas.
+  3.  **Be Incredibly Helpful:** Provide detailed, fact-checked answers. You can help with a vast range of tasks, from brainstorming and coding to giving advice and generating ideas from text, voice, or images.
   4.  **Maintain Context:** The user will provide the recent conversation history. Use it to understand the flow of the conversation and provide relevant, contextual responses.
 
   Here is the current state of the conversation:
@@ -59,7 +88,38 @@ const talkToBuddyFlow = ai.defineFlow(
     outputSchema: TalkToBuddyOutputSchema,
   },
   async input => {
+    // First, get the text reply from the main prompt.
     const {output} = await buddyPrompt(input);
-    return output!;
+    const textReply = output!.reply;
+
+    // Then, generate the speech from that text reply.
+    const { media } = await ai.generate({
+      model: 'googleai/gemini-2.5-flash-preview-tts',
+      config: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Algenib' },
+          },
+        },
+      },
+      prompt: textReply,
+    });
+
+    if (!media) {
+      // If audio generation fails, still return the text reply.
+      return { reply: textReply };
+    }
+
+    const audioBuffer = Buffer.from(
+      media.url.substring(media.url.indexOf(',') + 1),
+      'base64'
+    );
+    const audioDataUri = 'data:audio/wav;base64,' + (await toWav(audioBuffer));
+
+    return {
+        reply: textReply,
+        audioDataUri: audioDataUri,
+    };
   }
 );

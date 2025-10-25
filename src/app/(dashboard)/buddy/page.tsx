@@ -22,6 +22,7 @@ const formSchema = z.object({
 interface ChatMessage {
   role: 'user' | 'buddy';
   content: string;
+  audioDataUri?: string;
 }
 
 export default function BuddyPage() {
@@ -30,6 +31,7 @@ export default function BuddyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,6 +43,14 @@ export default function BuddyPage() {
   useEffect(() => {
     if (scrollAreaRef.current) {
         scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.role === 'buddy' && lastMessage.audioDataUri && audioRef.current) {
+        audioRef.current.src = lastMessage.audioDataUri;
+        audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
     }
   }, [messages]);
 
@@ -65,7 +75,7 @@ export default function BuddyPage() {
         message: values.message,
         conversationHistory: JSON.stringify(messages) // Pass history to AI
       });
-      const buddyMessage: ChatMessage = { role: 'buddy', content: response.reply };
+      const buddyMessage: ChatMessage = { role: 'buddy', content: response.reply, audioDataUri: response.audioDataUri };
       setMessages(prev => [...prev, buddyMessage]);
     } catch (error: any) {
       toast({
@@ -168,6 +178,7 @@ export default function BuddyPage() {
             </div>
         </CardContent>
       </Card>
+      <audio ref={audioRef} className="hidden" />
     </div>
   );
 }
