@@ -48,27 +48,28 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user && db) {
-      buddyForm.reset({
-        buddyName: 'Buddy',
-        enableVoice: true,
-        voice: 'Algenib',
-      });
       const buddyRef = doc(db, 'buddies', user.uid);
       getDoc(buddyRef).then((docSnap) => {
         if (docSnap.exists()) {
           const buddyData = docSnap.data();
           buddyForm.reset({ 
             buddyName: buddyData.name || 'Buddy',
-            enableVoice: buddyData.enableVoice !== false, // default to true
+            enableVoice: buddyData.enableVoice !== false,
             voice: buddyData.voice || 'Algenib'
           });
           if (buddyData.pfpUrl) {
             setBuddyPfpPreview(buddyData.pfpUrl);
           }
+        } else {
+           buddyForm.reset({
+            buddyName: 'Buddy',
+            enableVoice: true,
+            voice: 'Algenib',
+          });
         }
       });
     }
-  }, [user, db, buddyForm]);
+  }, [user, db, buddyForm.reset]);
 
   const handlePfpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -255,9 +256,9 @@ export default function ProfilePage() {
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         className="flex flex-col space-y-1"
-                        disabled={isBuddyLoading}
+                        disabled={isBuddyLoading || !buddyForm.watch('enableVoice')}
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
