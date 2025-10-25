@@ -13,6 +13,9 @@ import {z} from 'genkit';
 
 const GenerateHomeworkHelpInputSchema = z.object({
   question: z.string().describe('The homework question.'),
+  photoDataUri: z.string().optional().describe(
+    "A photo of the homework problem, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  ),
 });
 export type GenerateHomeworkHelpInput = z.infer<typeof GenerateHomeworkHelpInputSchema>;
 
@@ -31,9 +34,16 @@ const prompt = ai.definePrompt({
   name: 'generateHomeworkHelpPrompt',
   input: {schema: GenerateHomeworkHelpInputSchema},
   output: {schema: GenerateHomeworkHelpOutputSchema},
-  prompt: `You are an expert tutor. Provide a detailed explanation, an example, and a step-by-step solution to the following homework question:
+  prompt: `You are an expert tutor. A student needs help with a homework problem.
+
+Use the information they've provided below, which may include a written question and/or an image of the problem.
+
+Provide a detailed explanation of the core concepts, a relevant example, and a step-by-step solution to their specific question.
 
 Question: {{{question}}}
+{{#if photoDataUri}}
+Image of the problem: {{media url=photoDataUri}}
+{{/if}}
 
 Explanation:
 Example:
