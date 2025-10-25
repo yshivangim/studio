@@ -23,7 +23,7 @@ export type GenerateMusicSuggestionsInput = z.infer<typeof GenerateMusicSuggesti
 const GenerateMusicSuggestionsOutputSchema = z.object({
   suggestions: z
     .array(z.string())
-    .describe('A list of music suggestions based on the user input.'),
+    .describe('A list of at least 20 music suggestions based on the user input.'),
 });
 export type GenerateMusicSuggestionsOutput = z.infer<typeof GenerateMusicSuggestionsOutputSchema>;
 
@@ -43,7 +43,7 @@ Listening habits: {{{listeningHabits}}}
 Mood: {{{mood}}}
 Activity: {{{activity}}}
 
-Suggest some songs or artists that the user might like.`,
+Suggest at least 20 songs or artists that the user might like.`,
 });
 
 const generateMusicSuggestionsFlow = ai.defineFlow(
