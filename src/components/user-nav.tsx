@@ -17,6 +17,7 @@ import { signOut } from 'firebase/auth';
 import { LogOut, User as UserIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Skeleton } from './ui/skeleton';
 
 export function UserNav() {
   const user = useUser();
@@ -28,10 +29,6 @@ export function UserNav() {
     await signOut(auth);
     router.push('/login');
   };
-
-  if (!user) {
-    return null;
-  }
   
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
@@ -40,6 +37,10 @@ export function UserNav() {
       return names[0][0] + names[names.length - 1][0];
     }
     return name[0];
+  }
+
+  if (!user) {
+    return <Skeleton className="h-9 w-9 rounded-full" />;
   }
 
   return (

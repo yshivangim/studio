@@ -57,8 +57,16 @@ export default function DashboardLayout({
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+  // While firebase is loading, we can show a loader or nothing
+  // showing nothing makes the app feel faster
+  if (loading) {
     return <FullPageLoader />;
+  }
+
+  // If there is no user, we will be redirected, so we can return null
+  // to avoid flashing the layout.
+  if (!user) {
+    return null;
   }
 
   return (
