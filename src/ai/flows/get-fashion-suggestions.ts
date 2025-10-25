@@ -14,14 +14,17 @@ import {z} from 'genkit';
 const FashionSuggestionsInputSchema = z.object({
   userPreferences: z
     .string()
-    .describe('A description of the user\u2019s fashion preferences.'),
+    .describe('A description of the user’s fashion preferences.'),
   recentInteractions: z
     .string()
     .optional()
-    .describe('A summary of the user\u2019s recent interactions with the fashion recommender.'),
+    .describe('A summary of the user’s recent interactions with the fashion recommender.'),
   currentTrends: z
     .string()
     .describe('An optional description of current fashion trends.'),
+  photoDataUri: z.string().optional().describe(
+    "A photo of a clothing item or accessory, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  ),
 });
 export type FashionSuggestionsInput = z.infer<typeof FashionSuggestionsInputSchema>;
 
@@ -42,11 +45,14 @@ const fashionSuggestionsPrompt = ai.definePrompt({
   output: {schema: FashionSuggestionsOutputSchema},
   prompt: `You are a personal fashion consultant.
 
-  Based on the user's stated preferences, recent interactions, and current trends, provide personalized fashion suggestions.
+  Based on the user's stated preferences, current trends, and the uploaded image of their clothing item, provide personalized fashion suggestions.
 
   User Preferences: {{{userPreferences}}}
-  Recent Interactions: {{{recentInteractions}}}
   Current Trends: {{{currentTrends}}}
+  {{#if photoDataUri}}
+  Image of user's clothing item: {{media url=photoDataUri}}
+  Analyze the item in the image (color, style, type) and suggest items that would match or complement it.
+  {{/if}}
 
   Provide a detailed list of clothing items and outfits that align with the user's style.
   Do not be afraid to be creative.
