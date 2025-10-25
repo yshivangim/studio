@@ -34,4 +34,23 @@ const firebaseConfig = {
 // ... rest of the file
 ```
 
-After updating the configuration, the authentication and all Firebase services should work correctly.
+## Enable Google Sign-In and Authorize Domains
+
+For Google Sign-In to work, you must enable it in the Firebase console and authorize the domains where your app will run.
+
+1.  **Enable Google Provider**:
+    *   In the Firebase Console, go to the **Authentication** section.
+    *   Click the **Sign-in method** tab.
+    *   Click on **Google** from the list of providers.
+    *   **Enable** the provider and click **Save**.
+
+2.  **Authorize Domains for Development**:
+    To make Google Sign-In work while you are developing on your local machine, you must add `localhost` to the list of authorized domains.
+    *   In the **Authentication** > **Sign-in method** tab, scroll down to the **Authorized domains** section.
+    *   Click **Add domain** and enter `localhost`.
+    *   Click **Add domain** again and enter `127.0.0.1`.
+
+3.  **Verify Your Live Domain**:
+    When you deploy your app to Firebase Hosting, it will have a public URL (e.g., `your-project-id.web.app`). Firebase automatically adds this domain to the authorized list for you. You can verify it's there to ensure your live app's authentication will work.
+
+After completing these steps, the authentication and all Firebase services should work correctly for both local development and your live, deployed application.
