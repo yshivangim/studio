@@ -2,6 +2,7 @@
 'use client';
 
 import { useUser, useAuth, useFirestore } from '@/firebase/provider';
+import { getStorageInstance } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { LogOut, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -68,13 +69,6 @@ export default function ProfilePage() {
           if (buddyData.pfpUrl) {
             setBuddyPfpPreview(buddyData.pfpUrl);
           }
-        } else {
-           buddyForm.reset({
-            buddyName: 'Buddy',
-            enableVoice: true,
-            voice: 'Algenib',
-            language: 'English',
-          });
         }
       });
     }
@@ -117,7 +111,7 @@ export default function ProfilePage() {
     setIsBuddyLoading(true);
 
     try {
-      const storage = getStorage();
+      const storage = getStorageInstance();
       const pfpFile = values.buddyPfp?.[0];
       let pfpUrl = buddyPfpPreview;
 
@@ -273,7 +267,6 @@ export default function ProfilePage() {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isBuddyLoading}
                       />
                     </FormControl>
                   </FormItem>
@@ -291,7 +284,7 @@ export default function ProfilePage() {
                         onValueChange={field.onChange}
                         value={field.value}
                         className="flex flex-col space-y-1"
-                        disabled={isBuddyLoading || !buddyForm.watch('enableVoice')}
+                        disabled={!buddyForm.watch('enableVoice')}
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
@@ -340,4 +333,3 @@ export default function ProfilePage() {
   );
 }
 
-    
