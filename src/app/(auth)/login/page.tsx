@@ -7,9 +7,9 @@ import * as z from 'zod';
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
-  GoogleAuthProvider,
 } from 'firebase/auth';
-import { getAuthInstance, getGoogleProvider } from '@/firebase';
+import { getGoogleProvider } from '@/firebase';
+import { useAuth } from '@/firebase/provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -34,6 +34,7 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -47,8 +48,8 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!auth) return;
     setIsLoading(true);
-    const auth = getAuthInstance();
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: "Success", description: "Logged in successfully." });
@@ -66,8 +67,8 @@ export default function LoginPage() {
   }
 
   async function handleGoogleSignIn() {
+    if (!auth) return;
     setIsGoogleLoading(true);
-    const auth = getAuthInstance();
     const provider = getGoogleProvider();
     console.log('Attempting to sign in from hostname:', window.location.hostname);
     try {
@@ -122,7 +123,7 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || !auth}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Log In
             </Button>
@@ -138,7 +139,7 @@ export default function LoginPage() {
             </span>
           </div>
         </div>
-        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading}>
+        <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || !auth}>
           {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 109.8 512 0 402.2 0 261.8 0 120.9 109.8 8 244 8c66.8 0 126 23.4 172.9 61.9l-79.5 80.4C293.3 125.2 270.8 116.5 244 116.5c-73.4 0-134.3 61.2-134.3 136.8s60.9 136.8 134.3 136.8c77.4 0 120.9-49.8 125.7-93.5H244v-83.3h237.9c4.8 26.3 7.1 54.3 7.1 82.8z"></path></svg>}
           Google
         </Button>

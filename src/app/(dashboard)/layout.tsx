@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useUser, useAuth } from '@/firebase/provider';
+import { useUser, useAuth, useFirebaseLoading } from '@/firebase/provider';
 import { useRouter, usePathname } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -30,7 +30,6 @@ import Link from 'next/link';
 import { UserNav } from '@/components/user-nav';
 import { Logo } from '@/components/icons';
 import { FullPageLoader } from '@/components/full-page-loader';
-import { onAuthStateChanged } from 'firebase/auth';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -47,35 +46,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = useUser();
-  const auth = useAuth();
+  const loading = useFirebaseLoading();
   const router = useRouter();
   const pathname = usePathname();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth) {
-      // Auth object might not be available right away.
-      // The onAuthStateChanged listener will handle the redirect.
-      return;
+    // if the provider is done loading and there's no user, redirect to login
+    if (!loading && !user) {
+      router.replace('/login');
     }
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setLoading(false);
-      } else {
-        router.replace('/login');
-      }
-    });
+  }, [user, loading, router]);
 
-    return () => unsubscribe();
-  }, [auth, router]);
-
-  if (loading) {
-    return <FullPageLoader />;
-  }
-
-  // user object might be null for a brief moment after auth state changes.
-  // This prevents a flash of an empty layout.
-  if (!user) {
+  if (loading || !user) {
     return <FullPageLoader />;
   }
 

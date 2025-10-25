@@ -58,23 +58,35 @@ export default function ProfilePage() {
       if (user && db) {
         setIsFetching(true);
         const buddyRef = doc(db, 'buddies', user.uid);
-        const docSnap = await getDoc(buddyRef);
-        if (docSnap.exists()) {
-          const buddyData = docSnap.data();
-          buddyForm.reset({ 
-            buddyName: buddyData.name || 'Buddy',
-            enableVoice: buddyData.enableVoice !== false,
-            language: buddyData.language || 'English',
-          });
-          if (buddyData.pfpUrl) {
-            setBuddyPfpPreview(buddyData.pfpUrl);
+        try {
+          const docSnap = await getDoc(buddyRef);
+          if (docSnap.exists()) {
+            const buddyData = docSnap.data();
+            const defaultValues = { 
+              buddyName: buddyData.name || 'Buddy',
+              enableVoice: buddyData.enableVoice !== false,
+              language: buddyData.language || 'English',
+              buddyPfp: null,
+            };
+            buddyForm.reset(defaultValues);
+            if (buddyData.pfpUrl) {
+              setBuddyPfpPreview(buddyData.pfpUrl);
+            }
           }
+        } catch(error) {
+            console.error("Failed to fetch buddy profile:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Load Failed',
+                description: 'Could not load your buddy profile.'
+            });
+        } finally {
+            setIsFetching(false);
         }
-        setIsFetching(false);
       }
     }
     fetchBuddyProfile();
-  }, [user, db, buddyForm.reset]);
+  }, [user, db, buddyForm.reset, toast]);
 
   const handlePfpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,8 +128,8 @@ export default function ProfilePage() {
     try {
       const storage = getStorageInstance();
       const pfpFile = values.buddyPfp?.[0];
-      let pfpUrl = buddyPfpPreview;
-
+      let pfpUrl = buddyPfpPreview; // Keep existing image if no new one is uploaded
+      
       const dataToSave: {
         name: string;
         enableVoice: boolean;
@@ -135,14 +147,14 @@ export default function ProfilePage() {
         const snapshot = await uploadBytes(pfpRef, pfpFile);
         pfpUrl = await getDownloadURL(snapshot.ref);
         dataToSave.pfpUrl = pfpUrl;
-        setBuddyPfpPreview(pfpUrl);
       }
       
       const buddyRef = doc(db, 'buddies', user.uid);
       await setDoc(buddyRef, dataToSave, { merge: true });
 
-      toast({ title: 'Buddy Updated', description: 'Your buddy\'s profile has been saved.' });
-       buddyForm.reset(values); // Re-sync form state with latest saved data
+      toast({ title: 'Buddy Updated', description: "Your buddy's profile has been saved." });
+      buddyForm.reset(values); // Re-sync form state with latest saved data
+      if (pfpUrl) setBuddyPfpPreview(pfpUrl);
     } catch (error: any) {
       console.error('Buddy Update Error', error);
       toast({

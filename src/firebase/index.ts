@@ -31,8 +31,8 @@ function initializeFirebase() {
   }
 }
 
-// Call initialization once
-initializeFirebase();
+// We don't call initializeFirebase() here anymore.
+// It will be called by the getter functions to ensure it only runs on the client.
 
 // Export getter functions to ensure single instances
 export const getAppInstance = () => {
