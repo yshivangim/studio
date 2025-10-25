@@ -14,6 +14,9 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import {
   LayoutDashboard,
@@ -51,7 +54,6 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!auth) {
-      // Auth might not be initialized yet
       setLoading(true);
       return;
     }
@@ -71,7 +73,7 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return null; // or you can return a loading spinner
+    return null;
   }
 
   return (
@@ -102,6 +104,20 @@ export default function DashboardLayout({
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
+          <SidebarSeparator />
+            <SidebarGroup>
+                <SidebarGroupLabel>Chat History</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname.startsWith('/buddy')}>
+                            <Link href="/buddy">
+                                <MessageSquare />
+                                <span>Conversation with Buddy</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
         </SidebarContent>
       </Sidebar>
       <SidebarInset className="flex flex-col">
