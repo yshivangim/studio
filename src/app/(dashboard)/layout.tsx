@@ -31,10 +31,10 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/buddy', icon: MessageSquare, label: 'Buddy' },
   { href: '/homework', icon: BookOpen, label: 'Homework Helper' },
   { href: '/music', icon: Music, label: 'Music AI' },
   { href: '/fashion', icon: Shirt, label: 'Fashion AI' },
-  { href: '/buddy', icon: MessageSquare, label: 'Buddy' },
   { href: '/profile', icon: UserIcon, label: 'Profile' },
 ];
 

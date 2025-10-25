@@ -8,6 +8,12 @@ import Link from 'next/link';
 
 const featureCards = [
   {
+    href: '/buddy',
+    icon: MessageSquare,
+    title: 'Your AI Buddy',
+    description: 'Chat about anything and everything.',
+  },
+  {
     href: '/homework',
     icon: BookOpen,
     title: 'Homework Helper',
@@ -24,12 +30,6 @@ const featureCards = [
     icon: Shirt,
     title: 'Fashion Advisor',
     description: 'Get personalized style suggestions.',
-  },
-  {
-    href: '/buddy',
-    icon: MessageSquare,
-    title: 'Your AI Buddy',
-    description: 'Chat about anything and everything.',
   },
 ];
 
