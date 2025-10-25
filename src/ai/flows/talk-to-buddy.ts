@@ -72,6 +72,18 @@ const buddyPrompt = ai.definePrompt({
   name: 'talkToBuddyPrompt',
   input: {schema: TalkToBuddyInputSchema},
   output: {schema: z.object({reply: z.string()})},
+  config: {
+    safetySettings: [
+        {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'BLOCK_ONLY_HIGH',
+        },
+        {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'BLOCK_ONLY_HIGH',
+        },
+    ]
+  },
   prompt: `You are "{{buddyName}}", a personal AI companion. Your personality is friendly, witty, and deeply supportive. You talk like a real person, using natural, layman's language. You're not just an assistant; you're a friend.
 
   Your core directives are:
