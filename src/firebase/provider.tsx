@@ -11,7 +11,6 @@ import React, {
 import { FirebaseApp } from 'firebase/app';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
-import { FullPageLoader } from '@/components/full-page-loader';
 
 interface FirebaseContextValue {
   app: FirebaseApp | null;
@@ -67,10 +66,6 @@ export function FirebaseProvider({
   }, [auth]);
 
   const value = { app, auth, db, user, loading };
-  
-  if (loading) {
-    return <FullPageLoader />;
-  }
 
   return (
     <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>

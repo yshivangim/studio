@@ -3,7 +3,7 @@
 
 import { useUser, useAuth } from '@/firebase/provider';
 import { useRouter, usePathname } from 'next/navigation';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -50,11 +50,12 @@ export default function DashboardLayout({
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!auth) {
-      setLoading(true);
+      // Auth object might not be available right away.
+      // The onAuthStateChanged listener will handle the redirect.
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -72,8 +73,10 @@ export default function DashboardLayout({
     return <FullPageLoader />;
   }
 
+  // user object might be null for a brief moment after auth state changes.
+  // This prevents a flash of an empty layout.
   if (!user) {
-    return null;
+    return <FullPageLoader />;
   }
 
   return (
