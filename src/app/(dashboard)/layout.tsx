@@ -34,7 +34,7 @@ const navItems = [
   { href: '/homework', icon: BookOpen, label: 'Homework Helper' },
   { href: '/music', icon: Music, label: 'Music AI' },
   { href: '/fashion', icon: Shirt, label: 'Fashion AI' },
-  { href: '/tts', icon: MessageSquare, label: 'Text to Speech' },
+  { href: '/buddy', icon: MessageSquare, label: 'Buddy' },
   { href: '/profile', icon: UserIcon, label: 'Profile' },
 ];
 

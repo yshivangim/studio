@@ -26,10 +26,10 @@ const featureCards = [
     description: 'Get personalized style suggestions.',
   },
   {
-    href: '/tts',
+    href: '/buddy',
     icon: MessageSquare,
-    title: 'Text to Speech',
-    description: 'Bring your text to life with a voice.',
+    title: 'Your AI Buddy',
+    description: 'Chat about anything and everything.',
   },
 ];
 
