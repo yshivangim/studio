@@ -1,3 +1,5 @@
+'use client';
+
 import {
   initializeApp,
   getApps,
@@ -31,3 +33,11 @@ function initializeFirebase(): FirebaseInstances {
 }
 
 export { initializeFirebase };
+export { FirebaseClientProvider } from './client-provider';
+export {
+  useFirebaseApp,
+  useAuth,
+  useFirestore,
+  useUser,
+  FirebaseProvider,
+} from './provider';

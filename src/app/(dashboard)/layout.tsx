@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useAuth } from '@/firebase/provider';
+import { useUser, useAuth } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useEffect } from 'react';
 import {

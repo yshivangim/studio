@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/firebase/provider';
+import { useUser } from '@/firebase';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, BookOpen, Music, Shirt, MessageSquare } from 'lucide-react';
 import Link from 'next/link';

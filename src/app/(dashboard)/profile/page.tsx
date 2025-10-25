@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useAuth } from '@/firebase/provider';
+import { useUser, useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

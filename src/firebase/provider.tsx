@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useState,
+  useEffect,
+} from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
@@ -23,9 +29,9 @@ export const useFirebaseApp = () => useContext(FirebaseContext)?.app;
 export const useAuth = () => useContext(FirebaseContext)?.auth;
 export const useFirestore = () => useContext(FirebaseContext)?.db;
 export const useUser = () => {
-    const context = useContext(FirebaseContext);
-    return context?.user;
-}
+  const context = useContext(FirebaseContext);
+  return context?.user;
+};
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -34,7 +40,12 @@ interface FirebaseProviderProps {
   db: Firestore;
 }
 
-export function FirebaseProvider({ children, app, auth, db }: FirebaseProviderProps) {
+export function FirebaseProvider({
+  children,
+  app,
+  auth,
+  db,
+}: FirebaseProviderProps) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -44,12 +55,10 @@ export function FirebaseProvider({ children, app, auth, db }: FirebaseProviderPr
 
     return () => unsubscribe();
   }, [auth]);
-  
+
   const value = { app, auth, db, user };
 
   return (
-    <FirebaseContext.Provider value={value}>
-      {children}
-    </FirebaseContext.Provider>
+    <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>
   );
 }
