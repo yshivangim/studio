@@ -16,12 +16,9 @@ const FashionSuggestionsInputSchema = z.object({
   userPreferences: z
     .string()
     .describe('A description of the user’s fashion preferences.'),
-  recentInteractions: z
-    .string()
-    .optional()
-    .describe('A summary of the user’s recent interactions with the fashion recommender.'),
   currentTrends: z
     .string()
+    .optional()
     .describe('An optional description of current fashion trends.'),
   photoDataUri: z.string().optional().describe(
     "A photo of a clothing item or accessory, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
@@ -106,3 +103,5 @@ const fashionSuggestionsFlow = ai.defineFlow(
     return { suggestions: finalSuggestions };
   }
 );
+
+    

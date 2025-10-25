@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -71,7 +72,6 @@ export default function FashionPage() {
         userPreferences: values.userPreferences,
         currentTrends: values.currentTrends,
         photoDataUri,
-        recentInteractions: 'none', // Placeholder for now
       });
       setResult(response);
     } catch (error: any) {
@@ -223,3 +223,5 @@ export default function FashionPage() {
     </div>
   );
 }
+
+    
