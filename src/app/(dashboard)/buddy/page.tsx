@@ -8,7 +8,6 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Paperclip, X } from 'lucide-react';
@@ -17,6 +16,7 @@ import { useUser, useFirestore } from '@/firebase/provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { doc, getDoc } from 'firebase/firestore';
 import Image from 'next/image';
+import { Input } from '@/components/ui/input';
 
 const formSchema = z.object({
   message: z.string(),
@@ -48,6 +48,7 @@ export default function BuddyPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -93,7 +94,7 @@ export default function BuddyPage() {
     if (names.length > 1) {
       return names[0][0] + names[names.length - 1][0];
     }
-    return name[0];
+    return name.substring(0, 2);
   };
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,41 +128,38 @@ export default function BuddyPage() {
   }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!values.message && !values.image) return;
+    if ((!values.message || values.message.trim() === '') && !imagePreview) return;
 
     setIsLoading(true);
     
-    let photoDataUri: string | undefined = undefined;
-    const imageFile = values.image?.[0];
-    
-    if (imageFile) {
-        photoDataUri = await fileToBase64(imageFile);
-    }
+    let photoDataUri: string | undefined = imagePreview || undefined;
     
     const userMessage: ChatMessage = { role: 'user', content: values.message, photoDataUri };
     setMessages(prev => [...prev, userMessage]);
     form.reset();
     removeImage();
+    textareaRef.current?.focus();
 
     try {
       const response = await talkToBuddy({ 
         message: values.message,
         photoDataUri,
         buddyName: buddyProfile.name,
-        conversationHistory: JSON.stringify(messages), // Pass history to AI
+        conversationHistory: JSON.stringify(messages.slice(-10)), // Pass recent history
         enableVoice: buddyProfile.enableVoice,
         voice: buddyProfile.voice
       });
       const buddyMessage: ChatMessage = { role: 'buddy', content: response.reply, audioDataUri: response.audioDataUri };
       setMessages(prev => [...prev, buddyMessage]);
     } catch (error: any) {
+      console.error("Talk to Buddy Error:", error);
       toast({
         variant: 'destructive',
         title: 'An Error Occurred',
         description: error.message || 'Failed to get a response from Buddy.',
       });
-       const buddyMessage: ChatMessage = { role: 'buddy', content: "Sorry, I'm having a little trouble thinking straight right now. Could you try again in a moment?" };
-       setMessages(prev => [...prev, buddyMessage]);
+       const buddyErrorMessage: ChatMessage = { role: 'buddy', content: "Sorry, I'm having a little trouble thinking straight right now. Could you try again in a moment?" };
+       setMessages(prev => [...prev, buddyErrorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +202,7 @@ export default function BuddyPage() {
                     }`}>
                      {message.photoDataUri && (
                         <div className="relative w-full aspect-video rounded-md mb-2 overflow-hidden">
-                           <Image src={message.photoDataUri} alt="User upload" fill className="object-cover" />
+                           <Image src={message.photoDataUri} alt="User upload" layout="fill" className="object-cover" />
                         </div>
                      )}
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -237,11 +235,9 @@ export default function BuddyPage() {
                     name="image"
                     render={({ field }) => (
                         <FormItem>
-                            <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()}>
-                                <Paperclip className="h-5 w-5" />
-                            </Button>
                             <FormControl>
-                                <Input
+                              <>
+                                <input
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
@@ -251,6 +247,10 @@ export default function BuddyPage() {
                                         handleImageChange(e);
                                     }}
                                 />
+                                <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()}>
+                                    <Paperclip className="h-5 w-5" />
+                                </Button>
+                              </>
                             </FormControl>
                         </FormItem>
                     )}
@@ -258,7 +258,7 @@ export default function BuddyPage() {
                 <div className="flex-1 relative">
                   {imagePreview && (
                     <div className="absolute bottom-full left-0 mb-2 w-32 h-32 p-1 bg-background border rounded-md">
-                        <Image src={imagePreview} alt="Image preview" fill className="object-contain rounded-md" />
+                        <Image src={imagePreview} alt="Image preview" layout="fill" className="object-contain rounded-md" />
                         <Button
                           variant="destructive"
                           size="icon"
@@ -270,6 +270,7 @@ export default function BuddyPage() {
                     </div>
                   )}
                   <Textarea
+                      ref={textareaRef}
                       placeholder={`Message ${buddyProfile.name}...`}
                       className="min-h-[40px] max-h-48 resize-none pr-12"
                       {...form.register('message')}

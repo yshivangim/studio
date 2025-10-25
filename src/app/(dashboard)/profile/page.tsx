@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useAuth, useFirestore } from '@/firebase/provider';
@@ -47,6 +48,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user && db) {
+      buddyForm.reset({
+        buddyName: 'Buddy',
+        enableVoice: true,
+        voice: 'Algenib',
+      });
       const buddyRef = doc(db, 'buddies', user.uid);
       getDoc(buddyRef).then((docSnap) => {
         if (docSnap.exists()) {
@@ -56,7 +62,9 @@ export default function ProfilePage() {
             enableVoice: buddyData.enableVoice !== false, // default to true
             voice: buddyData.voice || 'Algenib'
           });
-          setBuddyPfpPreview(buddyData.pfpUrl);
+          if (buddyData.pfpUrl) {
+            setBuddyPfpPreview(buddyData.pfpUrl);
+          }
         }
       });
     }
@@ -91,7 +99,7 @@ export default function ProfilePage() {
     if (names.length > 1) {
       return names[0][0] + names[names.length - 1][0];
     }
-    return name[0];
+    return name.substring(0, 2);
   };
 
   async function onBuddySubmit(values: z.infer<typeof buddyFormSchema>) {
@@ -231,6 +239,7 @@ export default function ProfilePage() {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={isBuddyLoading}
                       />
                     </FormControl>
                   </FormItem>
@@ -248,6 +257,7 @@ export default function ProfilePage() {
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                         className="flex flex-col space-y-1"
+                        disabled={isBuddyLoading}
                       >
                         <FormItem className="flex items-center space-x-3 space-y-0">
                           <FormControl>
