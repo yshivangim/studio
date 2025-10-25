@@ -11,16 +11,20 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { LogOut, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useEffect, useState } from 'react';
 import { useForm, zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const buddyFormSchema = z.object({
-  buddyName: z.string().min(2, { message: 'Buddy name must be at least 2 characters.' }),
+  buddyName: z.string().min(2, { message: "Buddy's name must be at least 2 characters." }),
   buddyPfp: z.any().optional(),
+  enableVoice: z.boolean().default(true),
+  voice: z.string().default('Algenib'),
 });
 
 export default function ProfilePage() {
@@ -36,6 +40,8 @@ export default function ProfilePage() {
     resolver: zodResolver(buddyFormSchema),
     defaultValues: {
       buddyName: 'Buddy',
+      enableVoice: true,
+      voice: 'Algenib',
     },
   });
 
@@ -45,7 +51,11 @@ export default function ProfilePage() {
       getDoc(buddyRef).then((docSnap) => {
         if (docSnap.exists()) {
           const buddyData = docSnap.data();
-          buddyForm.reset({ buddyName: buddyData.name });
+          buddyForm.reset({ 
+            buddyName: buddyData.name || 'Buddy',
+            enableVoice: buddyData.enableVoice !== false, // default to true
+            voice: buddyData.voice || 'Algenib'
+          });
           setBuddyPfpPreview(buddyData.pfpUrl);
         }
       });
@@ -100,7 +110,12 @@ export default function ProfilePage() {
       }
       
       const buddyRef = doc(db, 'buddies', user.uid);
-      await setDoc(buddyRef, { name: values.buddyName, pfpUrl }, { merge: true });
+      await setDoc(buddyRef, { 
+        name: values.buddyName, 
+        pfpUrl,
+        enableVoice: values.enableVoice,
+        voice: values.voice,
+       }, { merge: true });
 
       toast({ title: 'Buddy Updated', description: 'Your buddy\'s profile has been saved.' });
     } catch (error: any) {
@@ -158,7 +173,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent>
            <Form {...buddyForm}>
-            <form onSubmit={buddyForm.handleSubmit(onBuddySubmit)} className="space-y-6">
+            <form onSubmit={buddyForm.handleSubmit(onBuddySubmit)} className="space-y-8">
                <FormField
                 control={buddyForm.control}
                 name="buddyName"
@@ -199,6 +214,62 @@ export default function ProfilePage() {
                       <FormMessage />
                   </FormItem>
                   )}
+              />
+              
+              <FormField
+                control={buddyForm.control}
+                name="enableVoice"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        Enable Voice Replies
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={buddyForm.control}
+                name="voice"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Buddy's Voice Style</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="Algenib" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Voice A (Female)
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="Achernar" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Voice B (Male)
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
 
               <Button type="submit" disabled={isBuddyLoading}>

@@ -14,20 +14,25 @@ import {z} from 'genkit';
 import wav from 'wav';
 
 const TalkToBuddyInputSchema = z.object({
-  message: z.string().describe('The user\'s latest message to Buddy.'),
-  photoDataUri: z.string().optional().describe(
-    "A photo sent by the user, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-  ),
+  message: z.string().describe("The user's latest message to Buddy."),
+  photoDataUri: z
+    .string()
+    .optional()
+    .describe(
+      "A photo sent by the user, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
   buddyName: z.string().optional().describe("The user's custom name for Buddy."),
   conversationHistory: z
     .string()
     .optional()
     .describe('A JSON string of the past conversation history.'),
+  enableVoice: z.boolean().optional().describe('Whether to generate an audio response.'),
+  voice: z.string().optional().describe('The voice to use for the audio response.'),
 });
 export type TalkToBuddyInput = z.infer<typeof TalkToBuddyInputSchema>;
 
 const TalkToBuddyOutputSchema = z.object({
-  reply: z.string().describe('Buddy\'s response to the user.'),
+  reply: z.string().describe("Buddy's response to the user."),
   audioDataUri: z.string().optional().describe('The audio response from Buddy as a data URI.'),
 });
 export type TalkToBuddyOutput = z.infer<typeof TalkToBuddyOutputSchema>;
@@ -66,7 +71,7 @@ async function toWav(
 const buddyPrompt = ai.definePrompt({
   name: 'talkToBuddyPrompt',
   input: {schema: TalkToBuddyInputSchema},
-  output: {schema: z.object({ reply: z.string() })},
+  output: {schema: z.object({reply: z.string()})},
   prompt: `You are "{{buddyName}}", a personal AI companion. Your personality is friendly, witty, and deeply supportive. You talk like a real person, using natural, layman's language. You're not just an assistant; you're a friend.
 
   Your core directives are:
@@ -99,19 +104,25 @@ const talkToBuddyFlow = ai.defineFlow(
   async (input) => {
     // Set a default name if none is provided
     const buddyName = input.buddyName || 'Buddy';
-    
+
     // First, get the text reply from the main prompt.
     const {output} = await buddyPrompt({...input, buddyName});
     const textReply = output!.reply;
 
+    // If voice is disabled, return only the text reply.
+    if (!input.enableVoice) {
+      return {reply: textReply};
+    }
+
     // Then, generate the speech from that text reply.
-    const { media } = await ai.generate({
+    const selectedVoice = input.voice || 'Algenib'; // Default to Algenib
+    const {media} = await ai.generate({
       model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Algenib' },
+            prebuiltVoiceConfig: {voiceName: selectedVoice},
           },
         },
       },
@@ -120,18 +131,15 @@ const talkToBuddyFlow = ai.defineFlow(
 
     if (!media) {
       // If audio generation fails, still return the text reply.
-      return { reply: textReply };
+      return {reply: textReply};
     }
 
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
+    const audioBuffer = Buffer.from(media.url.substring(media.url.indexOf(',') + 1), 'base64');
     const audioDataUri = 'data:audio/wav;base64,' + (await toWav(audioBuffer));
 
     return {
-        reply: textReply,
-        audioDataUri: audioDataUri,
+      reply: textReply,
+      audioDataUri: audioDataUri,
     };
   }
 );

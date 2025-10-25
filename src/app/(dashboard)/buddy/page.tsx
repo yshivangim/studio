@@ -33,6 +33,8 @@ interface ChatMessage {
 interface BuddyProfile {
   name: string;
   pfpUrl: string;
+  enableVoice: boolean;
+  voice: string;
 }
 
 export default function BuddyPage() {
@@ -42,7 +44,7 @@ export default function BuddyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [buddyProfile, setBuddyProfile] = useState<BuddyProfile>({ name: 'Buddy', pfpUrl: '' });
+  const [buddyProfile, setBuddyProfile] = useState<BuddyProfile>({ name: 'Buddy', pfpUrl: '', enableVoice: true, voice: 'Algenib' });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,7 +61,13 @@ export default function BuddyPage() {
       const buddyRef = doc(db, 'buddies', appUser.uid);
       getDoc(buddyRef).then((docSnap) => {
         if (docSnap.exists()) {
-          setBuddyProfile(docSnap.data() as BuddyProfile);
+          const data = docSnap.data();
+           setBuddyProfile({
+            name: data.name || 'Buddy',
+            pfpUrl: data.pfpUrl || '',
+            enableVoice: data.enableVoice !== false, // default to true
+            voice: data.voice || 'Algenib'
+          });
         }
       });
     }
@@ -140,7 +148,9 @@ export default function BuddyPage() {
         message: values.message,
         photoDataUri,
         buddyName: buddyProfile.name,
-        conversationHistory: JSON.stringify(messages) // Pass history to AI
+        conversationHistory: JSON.stringify(messages), // Pass history to AI
+        enableVoice: buddyProfile.enableVoice,
+        voice: buddyProfile.voice
       });
       const buddyMessage: ChatMessage = { role: 'buddy', content: response.reply, audioDataUri: response.audioDataUri };
       setMessages(prev => [...prev, buddyMessage]);
