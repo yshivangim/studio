@@ -14,7 +14,7 @@ import { Loader2, Send, Paperclip, X } from 'lucide-react';
 import { talkToBuddy } from '@/ai/flows/talk-to-buddy';
 import { useUser, useFirestore } from '@/firebase/provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 
@@ -24,10 +24,12 @@ const formSchema = z.object({
 });
 
 interface ChatMessage {
+  id?: string;
   role: 'user' | 'buddy';
   content: string;
   audioDataUri?: string;
   photoDataUri?: string;
+  timestamp?: any;
 }
 
 interface BuddyProfile {
@@ -57,6 +59,7 @@ export default function BuddyPage() {
     },
   });
 
+  // Fetch Buddy Profile
   useEffect(() => {
     if (appUser && db) {
       const buddyRef = doc(db, 'buddies', appUser.uid);
@@ -66,13 +69,39 @@ export default function BuddyPage() {
            setBuddyProfile({
             name: data.name || 'Buddy',
             pfpUrl: data.pfpUrl || '',
-            enableVoice: data.enableVoice !== false, // default to true
+            enableVoice: data.enableVoice !== false,
             voice: data.voice || 'Algenib'
           });
         }
       });
     }
   }, [appUser, db]);
+  
+  // Fetch Chat History
+  useEffect(() => {
+    if (appUser && db) {
+      const messagesRef = collection(db, 'buddies', appUser.uid, 'messages');
+      const q = query(messagesRef, orderBy('timestamp', 'asc'));
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const history: ChatMessage[] = [];
+        querySnapshot.forEach((doc) => {
+          history.push({ id: doc.id, ...doc.data() } as ChatMessage);
+        });
+        setMessages(history);
+      }, (error) => {
+        console.error("Error fetching chat history: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Could not load chat',
+            description: 'Failed to retrieve your conversation history.'
+        });
+      });
+      
+      return () => unsubscribe();
+    }
+  }, [appUser, db, toast]);
+
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -110,15 +139,6 @@ export default function BuddyPage() {
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = error => reject(error);
-      });
-  }
-
   const removeImage = () => {
     setImagePreview(null);
     form.setValue('image', null);
@@ -129,32 +149,57 @@ export default function BuddyPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if ((!values.message || values.message.trim() === '') && !imagePreview) return;
+    if (!appUser || !db) return;
 
     setIsLoading(true);
     
-    let photoDataUri: string | undefined = imagePreview || undefined;
+    const photoDataUri: string | undefined = imagePreview || undefined;
     
-    const userMessage: ChatMessage = { role: 'user', content: values.message, photoDataUri };
-    setMessages(prev => [...prev, userMessage]);
+    // 1. Save user message to Firestore
+    const userMessage: Omit<ChatMessage, 'id'> = { 
+        role: 'user', 
+        content: values.message, 
+        photoDataUri,
+        timestamp: serverTimestamp() 
+    };
+    const messagesRef = collection(db, 'buddies', appUser.uid, 'messages');
+    await addDoc(messagesRef, userMessage);
+
+    // 2. Clear the form and focus
     form.reset();
     removeImage();
     textareaRef.current?.focus();
 
     try {
+      // 3. Call the AI with full history
+      const fullHistory = messages.map(m => `${m.role}: ${m.content}`).join('\n');
       const response = await talkToBuddy({ 
         message: values.message,
         photoDataUri,
         buddyName: buddyProfile.name,
-        conversationHistory: JSON.stringify(messages.slice(-10)), // Pass recent history
+        conversationHistory: fullHistory,
         enableVoice: buddyProfile.enableVoice,
         voice: buddyProfile.voice
       });
-      const buddyMessage: ChatMessage = { role: 'buddy', content: response.reply, audioDataUri: response.audioDataUri };
-      setMessages(prev => [...prev, buddyMessage]);
+
+      // 4. Save Buddy's response to Firestore
+      const buddyMessage: Omit<ChatMessage, 'id'> = { 
+        role: 'buddy', 
+        content: response.reply, 
+        audioDataUri: response.audioDataUri,
+        timestamp: serverTimestamp()
+      };
+      await addDoc(messagesRef, buddyMessage);
+
     } catch (error: any) {
       console.error("Talk to Buddy Error:", error);
-       const buddyErrorMessage: ChatMessage = { role: 'buddy', content: "Sorry, I'm having a little trouble thinking straight right now. Could you try again in a moment?" };
-       setMessages(prev => [...prev, buddyErrorMessage]);
+      // Save an error message to the chat
+       const buddyErrorMessage:  Omit<ChatMessage, 'id'> = { 
+         role: 'buddy', 
+         content: "Sorry, I'm having a little trouble thinking straight right now. Could you try again in a moment?",
+         timestamp: serverTimestamp()
+       };
+       await addDoc(messagesRef, buddyErrorMessage);
       toast({
         variant: 'destructive',
         title: 'An Error Occurred',
@@ -177,7 +222,7 @@ export default function BuddyPage() {
       <Card className="flex-1 flex flex-col">
         <CardContent className="flex-1 flex flex-col p-4 md:p-6">
             <div ref={scrollAreaRef} className="flex-1 space-y-6 overflow-y-auto pr-4">
-                {messages.length === 0 && (
+                {messages.length === 0 && !isLoading && (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                         <Avatar className="h-24 w-24 mb-4 border-4 border-primary/20">
                             <AvatarImage src={buddyProfile.pfpUrl} alt={buddyProfile.name} />
@@ -187,8 +232,8 @@ export default function BuddyPage() {
                         <p className="text-muted-foreground">Ask a question, get advice, or just chat about your day!</p>
                     </div>
                 )}
-                {messages.map((message, index) => (
-                <div key={index} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                {messages.map((message) => (
+                <div key={message.id} className={`flex items-start gap-4 ${message.role === 'user' ? 'justify-end' : ''}`}>
                     {message.role === 'buddy' && (
                         <Avatar className="h-9 w-9 border-2 border-primary">
                             <AvatarImage src={buddyProfile.pfpUrl} alt={buddyProfile.name} />
@@ -280,6 +325,7 @@ export default function BuddyPage() {
                               form.handleSubmit(onSubmit)();
                           }
                       }}
+                      disabled={isLoading}
                   />
                   <Button type="submit" disabled={isLoading} size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8">
                       <Send className="h-4 w-4" />
