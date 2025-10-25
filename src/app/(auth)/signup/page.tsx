@@ -9,7 +9,7 @@ import {
   updateProfile,
   GoogleAuthProvider,
 } from 'firebase/auth';
-import { useFirebase } from '@/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -36,7 +36,7 @@ const formSchema = z.object({
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth } = useFirebase();
+  const auth = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 

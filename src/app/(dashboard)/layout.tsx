@@ -1,8 +1,8 @@
 'use client';
 
-import { useFirebase } from '@/firebase/provider';
+import { useUser, useAuth } from '@/firebase/provider';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -26,6 +26,7 @@ import Link from 'next/link';
 import { UserNav } from '@/components/user-nav';
 import { Logo } from '@/components/icons';
 import { FullPageLoader } from '@/components/full-page-loader';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -41,18 +42,34 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useFirebase();
+  const user = useUser();
+  const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login');
+    if (!auth) {
+      // Auth might not be initialized yet
+      return;
     }
-  }, [user, loading, router]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setLoading(false);
+      } else {
+        router.replace('/login');
+      }
+    });
 
-  if (loading || !user) {
+    return () => unsubscribe();
+  }, [auth, router]);
+
+  if (loading) {
     return <FullPageLoader />;
+  }
+
+  if (!user) {
+    return null; // or you can return a loading spinner
   }
 
   return (

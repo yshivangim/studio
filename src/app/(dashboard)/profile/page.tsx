@@ -1,6 +1,6 @@
 'use client';
 
-import { useFirebase } from '@/firebase/provider';
+import { useUser, useAuth } from '@/firebase/provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,7 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 
 
 export default function ProfilePage() {
-  const { user, auth } = useFirebase();
+  const user = useUser();
+  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
