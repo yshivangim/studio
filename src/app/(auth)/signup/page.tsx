@@ -7,8 +7,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
+  GoogleAuthProvider,
 } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -67,8 +68,9 @@ export default function SignupPage() {
 
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(auth, provider);
       toast({ title: "Success", description: "Signed up successfully with Google." });
       router.push('/dashboard');
     } catch (error: any) {
