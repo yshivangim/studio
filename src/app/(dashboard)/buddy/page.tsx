@@ -153,13 +153,13 @@ export default function BuddyPage() {
       setMessages(prev => [...prev, buddyMessage]);
     } catch (error: any) {
       console.error("Talk to Buddy Error:", error);
+       const buddyErrorMessage: ChatMessage = { role: 'buddy', content: "Sorry, I'm having a little trouble thinking straight right now. Could you try again in a moment?" };
+       setMessages(prev => [...prev, buddyErrorMessage]);
       toast({
         variant: 'destructive',
         title: 'An Error Occurred',
         description: error.message || 'Failed to get a response from Buddy.',
       });
-       const buddyErrorMessage: ChatMessage = { role: 'buddy', content: "Sorry, I'm having a little trouble thinking straight right now. Could you try again in a moment?" };
-       setMessages(prev => [...prev, buddyErrorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -202,7 +202,7 @@ export default function BuddyPage() {
                     }`}>
                      {message.photoDataUri && (
                         <div className="relative w-full aspect-video rounded-md mb-2 overflow-hidden">
-                           <Image src={message.photoDataUri} alt="User upload" layout="fill" className="object-cover" />
+                           <Image src={message.photoDataUri} alt="User upload" fill className="object-cover" />
                         </div>
                      )}
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -236,7 +236,7 @@ export default function BuddyPage() {
                     render={({ field }) => (
                         <FormItem>
                             <FormControl>
-                              <>
+                              <div>
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -250,7 +250,7 @@ export default function BuddyPage() {
                                 <Button type="button" size="icon" variant="ghost" onClick={() => fileInputRef.current?.click()}>
                                     <Paperclip className="h-5 w-5" />
                                 </Button>
-                              </>
+                              </div>
                             </FormControl>
                         </FormItem>
                     )}
@@ -258,7 +258,7 @@ export default function BuddyPage() {
                 <div className="flex-1 relative">
                   {imagePreview && (
                     <div className="absolute bottom-full left-0 mb-2 w-32 h-32 p-1 bg-background border rounded-md">
-                        <Image src={imagePreview} alt="Image preview" layout="fill" className="object-contain rounded-md" />
+                        <Image src={imagePreview} alt="Image preview" fill className="object-contain rounded-md" />
                         <Button
                           variant="destructive"
                           size="icon"
