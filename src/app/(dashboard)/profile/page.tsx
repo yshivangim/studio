@@ -25,7 +25,8 @@ export default function ProfilePage() {
         await signOut(auth);
         toast({ title: "Signed Out", description: "You have been successfully signed out." });
         router.push('/login');
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Sign Out Error", error.code, error.message);
         toast({ variant: 'destructive', title: "Sign Out Failed", description: "An error occurred while signing out." });
     }
   };

@@ -7,6 +7,7 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage } from "firebase/storage";
 import { getMessaging } from "firebase/messaging";
 
+// This is the single source of truth for the Firebase configuration.
 const firebaseConfig = {
   apiKey: "AIzaSyDL383RPqmLa-slX10bf1ko-VrCM9fBkqQ",
   authDomain: "studio-2446696699-3510f.firebaseapp.com",
@@ -26,9 +27,12 @@ if (!getApps().length) {
 }
 
 const auth: Auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 const db: Firestore = getFirestore(app);
 const storage = getStorage(app);
+
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: "select_account" });
+
 
 // Check if messaging is supported before initializing
 let messaging;

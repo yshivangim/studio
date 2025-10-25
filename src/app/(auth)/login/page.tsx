@@ -52,6 +52,7 @@ export default function LoginPage() {
       toast({ title: "Success", description: "Logged in successfully." });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error("Email/Password Sign-In Error", error.code, error.message);
       toast({
         variant: 'destructive',
         title: 'Login Failed',
@@ -65,10 +66,12 @@ export default function LoginPage() {
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google user:", result.user);
       toast({ title: "Success", description: "Logged in successfully with Google." });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error("Google Sign-In Error", error.code, error.message);
       toast({
         variant: 'destructive',
         title: 'Google Sign-In Failed',

@@ -56,6 +56,7 @@ export default function SignupPage() {
       toast({ title: "Success", description: "Account created successfully." });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error("Email/Password Sign-Up Error", error.code, error.message);
       toast({
         variant: 'destructive',
         title: 'Sign Up Failed',
@@ -69,10 +70,12 @@ export default function SignupPage() {
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google user:", result.user);
       toast({ title: "Success", description: "Signed up successfully with Google." });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error("Google Sign-Up Error", error.code, error.message);
       toast({
         variant: 'destructive',
         title: 'Google Sign-Up Failed',
