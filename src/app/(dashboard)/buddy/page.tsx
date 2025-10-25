@@ -344,5 +344,4 @@ export default function BuddyPage() {
     </div>
   );
 }
-
     

@@ -2,8 +2,6 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/generate-homework-help.ts';
-import '@/ai/flows/generate-speech-from-text.ts';
-import '@/ai/flows/generate-music-suggestions.ts';
-import '@/ai/flows/get-fashion-suggestions.ts';
-
+// This file is for local `genkit start` development and is not needed for the Next.js application.
+// Flow imports have been removed to prevent build conflicts with Next.js.
+// The flows are imported directly into the pages that use them.
