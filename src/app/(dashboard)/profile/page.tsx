@@ -20,14 +20,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const buddyFormSchema = z.object({
   buddyName: z.string().min(2, { message: "Buddy's name must be at least 2 characters." }),
   buddyPfp: z.any().optional(),
   enableVoice: z.boolean().default(true),
-  voice: z.string().default('Algenib'),
   language: z.string().default('English'),
 });
 
@@ -43,40 +41,45 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isBuddyLoading, setIsBuddyLoading] = useState(false);
   const [buddyPfpPreview, setBuddyPfpPreview] = useState<string | null>(null);
+  const [isFetching, setIsFetching] = useState(true);
 
   const buddyForm = useForm<z.infer<typeof buddyFormSchema>>({
     resolver: zodResolver(buddyFormSchema),
     defaultValues: {
       buddyName: 'Buddy',
       enableVoice: true,
-      voice: 'Algenib',
       language: 'English',
+      buddyPfp: null,
     },
   });
 
   useEffect(() => {
-    if (user && db) {
-      const buddyRef = doc(db, 'buddies', user.uid);
-      getDoc(buddyRef).then((docSnap) => {
+    async function fetchBuddyProfile() {
+      if (user && db) {
+        setIsFetching(true);
+        const buddyRef = doc(db, 'buddies', user.uid);
+        const docSnap = await getDoc(buddyRef);
         if (docSnap.exists()) {
           const buddyData = docSnap.data();
           buddyForm.reset({ 
             buddyName: buddyData.name || 'Buddy',
             enableVoice: buddyData.enableVoice !== false,
-            voice: buddyData.voice || 'Algenib',
             language: buddyData.language || 'English',
           });
           if (buddyData.pfpUrl) {
             setBuddyPfpPreview(buddyData.pfpUrl);
           }
         }
-      });
+        setIsFetching(false);
+      }
     }
+    fetchBuddyProfile();
   }, [user, db, buddyForm.reset]);
 
   const handlePfpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      buddyForm.setValue('buddyPfp', e.target.files, { shouldDirty: true });
       const reader = new FileReader();
       reader.onloadend = () => {
         setBuddyPfpPreview(reader.result as string);
@@ -98,7 +101,7 @@ export default function ProfilePage() {
   };
 
   const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'U';
+    if (!name) return 'B';
     const names = name.split(' ');
     if (names.length > 1) {
       return names[0][0] + names[names.length - 1][0];
@@ -115,21 +118,28 @@ export default function ProfilePage() {
       const pfpFile = values.buddyPfp?.[0];
       let pfpUrl = buddyPfpPreview;
 
+      const dataToSave: {
+        name: string;
+        enableVoice: boolean;
+        language: string;
+        pfpUrl?: string | null;
+      } = {
+        name: values.buddyName,
+        enableVoice: values.enableVoice,
+        language: values.language,
+        pfpUrl: pfpUrl,
+      };
+
       if (pfpFile) {
         const pfpRef = ref(storage, `buddy-pfps/${user.uid}/${pfpFile.name}`);
         const snapshot = await uploadBytes(pfpRef, pfpFile);
         pfpUrl = await getDownloadURL(snapshot.ref);
-        setBuddyPfpPreview(pfpUrl); // Optimistically update preview
+        dataToSave.pfpUrl = pfpUrl;
+        setBuddyPfpPreview(pfpUrl);
       }
       
       const buddyRef = doc(db, 'buddies', user.uid);
-      await setDoc(buddyRef, { 
-        name: values.buddyName, 
-        pfpUrl,
-        enableVoice: values.enableVoice,
-        voice: values.voice,
-        language: values.language,
-       }, { merge: true });
+      await setDoc(buddyRef, dataToSave, { merge: true });
 
       toast({ title: 'Buddy Updated', description: 'Your buddy\'s profile has been saved.' });
        buddyForm.reset(values); // Re-sync form state with latest saved data
@@ -145,8 +155,12 @@ export default function ProfilePage() {
     }
   }
 
-  if (!user) {
-    return null; // Or a loading state
+  if (isFetching || !user) {
+    return (
+        <div className="space-y-8 max-w-2xl mx-auto">
+            <Card><CardHeader><CardTitle>Loading Profile...</CardTitle></CardHeader><CardContent><Loader2 className="h-8 w-8 animate-spin" /></CardContent></Card>
+        </div>
+    );
   }
 
   return (
@@ -219,10 +233,7 @@ export default function ProfilePage() {
                                 type="file"
                                 accept="image/*"
                                 className="max-w-xs"
-                                onChange={(e) => {
-                                    field.onChange(e.target.files);
-                                    handlePfpChange(e);
-                                }}
+                                onChange={handlePfpChange}
                             />
                         </FormControl>
                       </div>
@@ -275,42 +286,6 @@ export default function ProfilePage() {
                 )}
               />
 
-              <FormField
-                control={buddyForm.control}
-                name="voice"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Buddy's Voice Style</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="flex flex-col space-y-1"
-                        disabled={!buddyForm.watch('enableVoice')}
-                      >
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Algenib" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Voice A (Female)
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Achernar" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            Voice B (Male)
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <Button type="submit" disabled={isBuddyLoading || !buddyForm.formState.isDirty}>
                 {isBuddyLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Buddy Profile
@@ -334,5 +309,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

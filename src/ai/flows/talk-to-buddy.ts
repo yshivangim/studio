@@ -129,7 +129,7 @@ const talkToBuddyFlow = ai.defineFlow(
     }
 
     // Then, generate the speech from that text reply.
-    const selectedVoice = input.voice || 'Algenib'; // Default to Algenib
+    const selectedVoice = "Achernar"; // Default to Male voice
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.5-flash-preview-tts',
       config: {
