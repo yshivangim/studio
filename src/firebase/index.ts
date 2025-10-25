@@ -1,3 +1,4 @@
+
 'use client';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
@@ -6,16 +7,14 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage } from "firebase/storage";
 import { getMessaging } from "firebase/messaging";
 
-
-// IMPORTANT: Replace this with your actual Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "AIzaSyDL383RPqmLa-slX10bf1ko-VrCM9fBkqQ",
+  authDomain: "studio-2446696699-3510f.firebaseapp.com",
+  projectId: "studio-2446696699-3510f",
+  storageBucket: "studio-2446696699-3510f.appspot.com",
+  messagingSenderId: "933954996577",
+  appId: "1:933954996577:web:97478cc89775ccaedf5d20",
+  measurementId: ""
 };
 
 // Initialize Firebase
@@ -26,10 +25,10 @@ if (!getApps().length) {
   app = getApp();
 }
 
-export const auth: Auth = getAuth(app);
-export const provider = new GoogleAuthProvider();
-export const db: Firestore = getFirestore(app);
-export const storage = getStorage(app);
+const auth: Auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const db: Firestore = getFirestore(app);
+const storage = getStorage(app);
 
 // Check if messaging is supported before initializing
 let messaging;
@@ -42,4 +41,4 @@ if (typeof window !== 'undefined') {
     }
 }
 
-export { app, messaging };
+export { app, auth, provider, db, storage, messaging };
