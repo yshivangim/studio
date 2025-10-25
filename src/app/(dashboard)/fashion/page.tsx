@@ -5,11 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Shirt, Sparkles, X } from 'lucide-react';
+import { Loader2, Sparkles, X, Camera } from 'lucide-react';
 import { getFashionSuggestions, type FashionSuggestionsOutput } from '@/ai/flows/get-fashion-suggestions';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
@@ -187,22 +187,38 @@ export default function FashionPage() {
       </Card>
 
       {isLoading && (
-        <div className="flex items-center justify-center rounded-lg border p-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex flex-col items-center justify-center rounded-lg border p-12 space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-muted-foreground">Generating your visual style guide... this can take a moment.</p>
         </div>
       )}
 
-      {result && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="h-6 w-6 text-primary" /> Your Personalized Suggestions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm max-w-none whitespace-pre-wrap rounded-md bg-muted/50 p-4">
-                {result.suggestions}
+      {result && result.suggestions && (
+        <div className="space-y-6">
+            <div className="text-center">
+                 <h2 className="text-2xl font-bold font-headline flex items-center justify-center gap-2"><Sparkles className="h-6 w-6 text-primary" /> Your Personalized Lookbook</h2>
+                 <p className="text-muted-foreground">Here are some looks and poses inspired by your style.</p>
             </div>
-          </CardContent>
-        </Card>
+           
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {result.suggestions.map((suggestion, index) => (
+                    <Card key={index} className="overflow-hidden">
+                        <div className="relative w-full aspect-square">
+                            <Image src={suggestion.imageDataUri} alt={`Fashion suggestion ${index + 1}`} fill className="object-cover" />
+                        </div>
+                        <CardContent className="p-4">
+                            <p className="text-sm text-foreground mb-4 whitespace-pre-wrap">{suggestion.description}</p>
+                            <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
+                                <Camera className="h-4 w-4 mt-0.5 shrink-0" />
+                                <div>
+                                    <span className="font-semibold">Pose Tip:</span> {suggestion.pose}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
       )}
     </div>
   );
