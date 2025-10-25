@@ -119,6 +119,7 @@ export default function ProfilePage() {
         const pfpRef = ref(storage, `buddy-pfps/${user.uid}/${pfpFile.name}`);
         const snapshot = await uploadBytes(pfpRef, pfpFile);
         pfpUrl = await getDownloadURL(snapshot.ref);
+        setBuddyPfpPreview(pfpUrl); // Optimistically update preview
       }
       
       const buddyRef = doc(db, 'buddies', user.uid);
@@ -131,6 +132,7 @@ export default function ProfilePage() {
        }, { merge: true });
 
       toast({ title: 'Buddy Updated', description: 'Your buddy\'s profile has been saved.' });
+       buddyForm.reset(values); // Re-sync form state with latest saved data
     } catch (error: any) {
       console.error('Buddy Update Error', error);
       toast({
@@ -309,7 +311,7 @@ export default function ProfilePage() {
                 )}
               />
 
-              <Button type="submit" disabled={isBuddyLoading}>
+              <Button type="submit" disabled={isBuddyLoading || !buddyForm.formState.isDirty}>
                 {isBuddyLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Buddy Profile
               </Button>
@@ -333,3 +335,4 @@ export default function ProfilePage() {
   );
 }
 
+    
