@@ -7,8 +7,9 @@ import * as z from 'zod';
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
+  GoogleAuthProvider,
 } from 'firebase/auth';
-import { auth, provider } from '@/firebase';
+import { getAuthInstance, getGoogleProvider } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -47,6 +48,7 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    const auth = getAuthInstance();
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: "Success", description: "Logged in successfully." });
@@ -65,6 +67,8 @@ export default function LoginPage() {
 
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true);
+    const auth = getAuthInstance();
+    const provider = getGoogleProvider();
     console.log('Attempting to sign in from hostname:', window.location.hostname);
     try {
       const result = await signInWithPopup(auth, provider);

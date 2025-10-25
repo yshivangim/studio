@@ -1,11 +1,14 @@
 
 'use client';
 
-import { ReactNode } from 'react';
-import { app, auth, db } from './index';
+import { ReactNode, useMemo } from 'react';
+import { getAppInstance, getAuthInstance, getDbInstance } from './index';
 import { FirebaseProvider } from './provider';
 
 export function FirebaseClientProvider({ children }: { children: ReactNode }) {
+  const app = useMemo(getAppInstance, []);
+  const auth = useMemo(getAuthInstance, []);
+  const db = useMemo(getDbInstance, []);
 
   return (
     <FirebaseProvider app={app} auth={auth} db={db}>

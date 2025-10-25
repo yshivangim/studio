@@ -4,45 +4,87 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage } from "firebase/storage";
-import { getMessaging } from "firebase/messaging";
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getMessaging, Messaging } from 'firebase/messaging';
+import { firebaseConfig } from './config';
 
-// This is the single source of truth for the Firebase configuration.
-const firebaseConfig = {
-  apiKey: "AIzaSyDL383RPqmLa-slX10bf1ko-VrCM9fBkqQ",
-  authDomain: "studio-2446696699-3510f.firebaseapp.com",
-  projectId: "studio-2446696699-3510f",
-  storageBucket: "studio-2446696699-3510f.appspot.com",
-  messagingSenderId: "933954996577",
-  appId: "1:933954996577:web:97478cc89775ccaedf5d20",
-  measurementId: ""
-};
+// This file is the single point of entry for all Firebase services.
+// It ensures that Firebase is initialized only once (singleton pattern).
 
-// Initialize Firebase
 let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+let messaging: Messaging | null;
+let provider: GoogleAuthProvider;
 
-const auth: Auth = getAuth(app);
-const db: Firestore = getFirestore(app);
-const storage = getStorage(app);
-
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: "select_account" });
-
-
-// Check if messaging is supported before initializing
-let messaging;
-if (typeof window !== 'undefined') {
-    try {
+function initializeFirebase() {
+  if (typeof window !== 'undefined') {
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      storage = getStorage(app);
+      provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
+      try {
         messaging = getMessaging(app);
-    } catch (e) {
-        console.error("Firebase Messaging is not supported in this browser:", e);
+      } catch (e) {
+        console.error('Firebase Messaging is not supported in this browser:', e);
         messaging = null;
+      }
+
+    } else {
+      app = getApp();
+      auth = getAuth(app);
+      db = getFirestore(app);
+      storage = getStorage(app);
+      provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      if (!messaging) { // Check if messaging was initialized before
+         try {
+            messaging = getMessaging(app);
+        } catch (e) {
+            console.error("Firebase Messaging is not supported in this browser:", e);
+            messaging = null;
+        }
+      }
     }
+  }
 }
 
-export { app, auth, provider, db, storage, messaging };
+// Call initialization
+initializeFirebase();
+
+// Export getter functions to ensure single instances
+export const getAppInstance = () => {
+    if (!app) initializeFirebase();
+    return app;
+}
+
+export const getAuthInstance = () => {
+    if (!auth) initializeFirebase();
+    return auth;
+}
+
+export const getDbInstance = () => {
+    if (!db) initializeFirebase();
+    return db;
+}
+
+export const getStorageInstance = () => {
+    if (!storage) initializeFirebase();
+    return storage;
+}
+
+export const getMessagingInstance = () => {
+    if (!messaging) initializeFirebase();
+    return messaging;
+}
+
+export const getGoogleProvider = () => {
+    if (!provider) initializeFirebase();
+    return provider;
+}

@@ -11,12 +11,14 @@ import React, {
 import { FirebaseApp } from 'firebase/app';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
+import { FullPageLoader } from '@/components/full-page-loader';
 
 interface FirebaseContextValue {
   app: FirebaseApp | null;
   auth: Auth | null;
   db: Firestore | null;
   user: User | null;
+  loading: boolean;
 }
 
 const FirebaseContext = createContext<FirebaseContextValue>({
@@ -24,6 +26,7 @@ const FirebaseContext = createContext<FirebaseContextValue>({
   auth: null,
   db: null,
   user: null,
+  loading: true,
 });
 
 export const useFirebaseApp = () => useContext(FirebaseContext)?.app;
@@ -33,6 +36,10 @@ export const useUser = () => {
   const context = useContext(FirebaseContext);
   return context?.user;
 };
+export const useFirebaseLoading = () => {
+    const context = useContext(FirebaseContext);
+    return context?.loading;
+}
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -48,16 +55,22 @@ export function FirebaseProvider({
   db,
 }: FirebaseProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [auth]);
 
-  const value = { app, auth, db, user };
+  const value = { app, auth, db, user, loading };
+  
+  if (loading) {
+    return <FullPageLoader />;
+  }
 
   return (
     <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>
