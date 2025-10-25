@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase/provider';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, BookOpen, Music, Shirt, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ const featureCards = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user } = useFirebase();
 
   return (
     <div className="space-y-8">

@@ -1,11 +1,10 @@
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase/provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -14,11 +13,12 @@ import { useToast } from '@/hooks/use-toast';
 
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, auth } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
+    if (!auth) return;
     try {
         await signOut(auth);
         toast({ title: "Signed Out", description: "You have been successfully signed out." });
@@ -81,7 +81,7 @@ export default function ProfilePage() {
             <CardTitle className="font-headline">Account Actions</CardTitle>
         </CardHeader>
         <CardContent>
-            <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto">
+            <Button variant="destructive" onClick={handleSignOut} className="w-full sm:w-auto" disabled={!auth}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
             </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase/provider';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import {
@@ -41,7 +41,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useFirebase();
   const router = useRouter();
   const pathname = usePathname();
 

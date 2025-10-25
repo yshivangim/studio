@@ -1,10 +1,8 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { initializeApp, getApps, getApp, FirebaseOptions, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
-// IMPORTANT: Replace with your own Firebase configuration
-const firebaseConfig = {
+const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyDL383RPqmLa-slX10bf1ko-VrCM9fBkqQ",
   authDomain: "studio-2446696699-3510f.firebaseapp.com",
   projectId: "studio-2446696699-3510f",
@@ -13,10 +11,23 @@ const firebaseConfig = {
   appId: "1:933954996577:web:97478cc89775ccaedf5d20",
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-const googleProvider = new GoogleAuthProvider();
+type FirebaseInstances = {
+    app: FirebaseApp;
+    auth: Auth;
+    db: Firestore;
+};
 
-export { app, auth, db, storage, googleProvider };
+let firebaseInstances: FirebaseInstances | null = null;
+
+export const initializeFirebase = (): FirebaseInstances => {
+  if (firebaseInstances) {
+    return firebaseInstances;
+  }
+
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  firebaseInstances = { app, auth, db };
+  return firebaseInstances;
+};
