@@ -52,6 +52,7 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!auth) {
       // Auth might not be initialized yet
+      setLoading(true);
       return;
     }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
