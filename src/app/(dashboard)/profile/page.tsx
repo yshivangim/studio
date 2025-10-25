@@ -20,13 +20,19 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const buddyFormSchema = z.object({
   buddyName: z.string().min(2, { message: "Buddy's name must be at least 2 characters." }),
   buddyPfp: z.any().optional(),
   enableVoice: z.boolean().default(true),
   voice: z.string().default('Algenib'),
+  language: z.string().default('English'),
 });
+
+const languages = [
+    'English', 'Spanish', 'French', 'German', 'Hindi', 'Mandarin', 'Japanese', 'Arabic', 'Russian', 'Portuguese'
+];
 
 export default function ProfilePage() {
   const user = useUser();
@@ -43,6 +49,7 @@ export default function ProfilePage() {
       buddyName: 'Buddy',
       enableVoice: true,
       voice: 'Algenib',
+      language: 'English',
     },
   });
 
@@ -55,7 +62,8 @@ export default function ProfilePage() {
           buddyForm.reset({ 
             buddyName: buddyData.name || 'Buddy',
             enableVoice: buddyData.enableVoice !== false,
-            voice: buddyData.voice || 'Algenib'
+            voice: buddyData.voice || 'Algenib',
+            language: buddyData.language || 'English',
           });
           if (buddyData.pfpUrl) {
             setBuddyPfpPreview(buddyData.pfpUrl);
@@ -65,6 +73,7 @@ export default function ProfilePage() {
             buddyName: 'Buddy',
             enableVoice: true,
             voice: 'Algenib',
+            language: 'English',
           });
         }
       });
@@ -124,6 +133,7 @@ export default function ProfilePage() {
         pfpUrl,
         enableVoice: values.enableVoice,
         voice: values.voice,
+        language: values.language,
        }, { merge: true });
 
       toast({ title: 'Buddy Updated', description: 'Your buddy\'s profile has been saved.' });
@@ -224,6 +234,29 @@ export default function ProfilePage() {
                   </FormItem>
                   )}
               />
+
+               <FormField
+                control={buddyForm.control}
+                name="language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Language</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a language" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {languages.map(lang => (
+                            <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <FormField
                 control={buddyForm.control}
@@ -306,3 +339,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

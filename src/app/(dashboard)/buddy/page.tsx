@@ -37,6 +37,7 @@ interface BuddyProfile {
   pfpUrl: string;
   enableVoice: boolean;
   voice: string;
+  language: string;
 }
 
 export default function BuddyPage() {
@@ -46,7 +47,7 @@ export default function BuddyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [buddyProfile, setBuddyProfile] = useState<BuddyProfile>({ name: 'Buddy', pfpUrl: '', enableVoice: true, voice: 'Algenib' });
+  const [buddyProfile, setBuddyProfile] = useState<BuddyProfile>({ name: 'Buddy', pfpUrl: '', enableVoice: true, voice: 'Algenib', language: 'English' });
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +71,8 @@ export default function BuddyPage() {
             name: data.name || 'Buddy',
             pfpUrl: data.pfpUrl || '',
             enableVoice: data.enableVoice !== false,
-            voice: data.voice || 'Algenib'
+            voice: data.voice || 'Algenib',
+            language: data.language || 'English',
           });
         }
       });
@@ -179,7 +181,8 @@ export default function BuddyPage() {
         buddyName: buddyProfile.name,
         conversationHistory: fullHistory,
         enableVoice: buddyProfile.enableVoice,
-        voice: buddyProfile.voice
+        voice: buddyProfile.voice,
+        language: buddyProfile.language,
       });
 
       // 4. Save Buddy's response to Firestore
@@ -340,3 +343,5 @@ export default function BuddyPage() {
     </div>
   );
 }
+
+    
