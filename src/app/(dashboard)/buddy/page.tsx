@@ -60,11 +60,11 @@ export default function BuddyPage() {
     },
   });
 
-  // Fetch Buddy Profile
+  // Fetch Buddy Profile with real-time updates
   useEffect(() => {
     if (appUser && db) {
       const buddyRef = doc(db, 'buddies', appUser.uid);
-      getDoc(buddyRef).then((docSnap) => {
+      const unsubscribe = onSnapshot(buddyRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
            setBuddyProfile({
@@ -75,9 +75,18 @@ export default function BuddyPage() {
             language: data.language || 'English',
           });
         }
+      }, (error) => {
+        console.error("Error fetching buddy profile:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Could not load profile',
+          description: 'Failed to retrieve your buddy\'s profile.'
+        });
       });
+      
+      return () => unsubscribe();
     }
-  }, [appUser, db]);
+  }, [appUser, db, toast]);
   
   // Fetch Chat History
   useEffect(() => {
@@ -343,5 +352,3 @@ export default function BuddyPage() {
     </div>
   );
 }
-
-    

@@ -53,46 +53,50 @@ export default function ProfilePage() {
     },
   });
 
-  const { reset: resetBuddyForm } = buddyForm;
+  const { reset: resetBuddyForm, formState: { isDirty } } = buddyForm;
+
+  const fetchBuddyProfile = useCallback(async () => {
+    if (!user || !db) return;
+    
+    const buddyRef = doc(db, 'buddies', user.uid);
+    try {
+      const docSnap = await getDoc(buddyRef);
+      if (docSnap.exists()) {
+        const buddyData = docSnap.data();
+        const defaultValues = { 
+          buddyName: buddyData.name || 'Buddy',
+          enableVoice: buddyData.enableVoice !== false,
+          language: buddyData.language || 'English',
+          buddyPfp: null,
+        };
+        resetBuddyForm(defaultValues);
+        if (buddyData.pfpUrl) {
+          setBuddyPfpPreview(buddyData.pfpUrl);
+        }
+      }
+    } catch(error) {
+        console.error("Failed to fetch buddy profile:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Load Failed',
+            description: 'Could not load your buddy profile.'
+        });
+    } finally {
+        setIsFetching(false);
+    }
+  }, [user, db, resetBuddyForm, toast]);
+
 
   useEffect(() => {
-    async function fetchBuddyProfile() {
-      if (!user || !db) {
-        // If user or db isn't available yet, wait.
-        // If user is null after loading, auth guard will redirect.
-        if (!isFetching) setIsFetching(true);
-        return;
-      }
-      
-      const buddyRef = doc(db, 'buddies', user.uid);
-      try {
-        const docSnap = await getDoc(buddyRef);
-        if (docSnap.exists()) {
-          const buddyData = docSnap.data();
-          const defaultValues = { 
-            buddyName: buddyData.name || 'Buddy',
-            enableVoice: buddyData.enableVoice !== false,
-            language: buddyData.language || 'English',
-            buddyPfp: null,
-          };
-          resetBuddyForm(defaultValues);
-          if (buddyData.pfpUrl) {
-            setBuddyPfpPreview(buddyData.pfpUrl);
-          }
-        }
-      } catch(error) {
-          console.error("Failed to fetch buddy profile:", error);
-          toast({
-              variant: 'destructive',
-              title: 'Load Failed',
-              description: 'Could not load your buddy profile.'
-          });
-      } finally {
-          setIsFetching(false);
-      }
+    // Only fetch if user and db are available
+    if (user && db) {
+      setIsFetching(true);
+      fetchBuddyProfile();
+    } else if (!user && !isFetching) {
+      // If there's no user and we are not already loading, set fetching to false.
+      setIsFetching(false);
     }
-    fetchBuddyProfile();
-  }, [user, db, resetBuddyForm, toast, isFetching]);
+  }, [user, db, fetchBuddyProfile, isFetching]);
 
   const handlePfpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,58 +132,64 @@ export default function ProfilePage() {
   };
 
   async function onBuddySubmit(values: z.infer<typeof buddyFormSchema>) {
-    if (!user || !db) return;
+    if (!user || !db || !isDirty) return;
+
     setIsBuddyLoading(true);
+    toast({ title: 'Saving...', description: "Your buddy's profile is being updated." });
 
-    try {
-      const storage = getStorageInstance();
-      const pfpFile = values.buddyPfp?.[0];
-      let pfpUrl = buddyPfpPreview; 
-      
-      const dataToSave: {
-        name: string;
-        enableVoice: boolean;
-        language: string;
-        pfpUrl?: string | null;
-      } = {
-        name: values.buddyName,
-        enableVoice: values.enableVoice,
-        language: values.language,
-      };
+    const pfpFile = values.buddyPfp?.[0];
+    let newPfpUrl = buddyPfpPreview;
 
-      if (pfpFile) {
-        const pfpRef = ref(storage, `buddy-pfps/${user.uid}/${pfpFile.name}`);
-        const snapshot = await uploadBytes(pfpRef, pfpFile);
-        pfpUrl = await getDownloadURL(snapshot.ref);
+    const dataToSave: {
+      name: string;
+      enableVoice: boolean;
+      language: string;
+      pfpUrl?: string | null;
+    } = {
+      name: values.buddyName,
+      enableVoice: values.enableVoice,
+      language: values.language,
+      pfpUrl: newPfpUrl,
+    };
+
+    const processSave = async () => {
+      try {
+        if (pfpFile) {
+          const storage = getStorageInstance();
+          const pfpRef = ref(storage, `buddy-pfps/${user.uid}/${pfpFile.name}`);
+          const snapshot = await uploadBytes(pfpRef, pfpFile);
+          newPfpUrl = await getDownloadURL(snapshot.ref);
+          dataToSave.pfpUrl = newPfpUrl;
+        }
+
+        const buddyRef = doc(db, 'buddies', user.uid);
+        await setDoc(buddyRef, dataToSave, { merge: true });
+
+        toast({ title: 'Buddy Updated', description: "Your buddy's profile has been saved." });
+        
+        buddyForm.reset({ ...values, buddyPfp: null });
+        if (newPfpUrl) setBuddyPfpPreview(newPfpUrl);
+
+      } catch (error: any) {
+        console.error('Buddy Update Error', error);
+        toast({
+          variant: 'destructive',
+          title: 'Update Failed',
+          description: error.message || 'Could not update buddy profile.',
+        });
+      } finally {
+        setIsBuddyLoading(false);
       }
-      
-      dataToSave.pfpUrl = pfpUrl;
-
-      const buddyRef = doc(db, 'buddies', user.uid);
-      await setDoc(buddyRef, dataToSave, { merge: true });
-
-      toast({ title: 'Buddy Updated', description: "Your buddy's profile has been saved." });
-      
-      // Reset form to the new values to clear the 'dirty' state
-      buddyForm.reset({ ...values, buddyPfp: null }); 
-      if (pfpUrl) setBuddyPfpPreview(pfpUrl);
-
-    } catch (error: any) {
-      console.error('Buddy Update Error', error);
-      toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: error.message || 'Could not update buddy profile.',
-      });
-    } finally {
-      setIsBuddyLoading(false);
-    }
+    };
+    
+    // Run the save operation in the background
+    processSave();
   }
 
-  if (isFetching || !user) {
+  if (isFetching) {
     return (
         <div className="space-y-8 max-w-2xl mx-auto">
-            <Card><CardHeader><CardTitle>Loading Profile...</CardTitle></CardHeader><CardContent><Loader2 className="h-8 w-8 animate-spin" /></CardContent></Card>
+            <Card><CardHeader><CardTitle>Loading Profile...</CardTitle></CardHeader><CardContent><Loader2 className="h-8 w-8 animate-spin text-primary" /></CardContent></Card>
         </div>
     );
   }
@@ -307,7 +317,7 @@ export default function ProfilePage() {
                 )}
               />
 
-              <Button type="submit" disabled={isBuddyLoading || !buddyForm.formState.isDirty}>
+              <Button type="submit" disabled={isBuddyLoading || !isDirty}>
                 {isBuddyLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Buddy Profile
               </Button>
